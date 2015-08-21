@@ -6,7 +6,7 @@ from OpenSSL import crypto
 def get_subject(f):
 	""" extract the common name from a certificate
 	"""
-	c = crypto.load_certificate(crypto.FILETYPE_DER, f.read())
+	c = crypto.load_certificate(crypto.FILETYPE_ASN1, f.read())
 	s = c.get_subject()
 	for [a,b] in s.get_components():
 		if (a == 'CN'):
