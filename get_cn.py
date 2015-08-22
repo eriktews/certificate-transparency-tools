@@ -10,14 +10,19 @@ def get_subject(f):
 	s = c.get_subject()
 	for [a,b] in s.get_components():
 		if (a == 'CN'):
-			return b
+			if not " " in b:
+				return b
 	return ""
 
 def main():
         parser = argparse.ArgumentParser(description='print the cn of a certificate')
-	parser.add_argument('f', type=file, metavar='filename', help='DER encoded certificate file')
+	parser.add_argument('f', type=file, nargs="+", metavar='filename', help='DER encoded certificate file')
 	args = parser.parse_args()
-	print get_subject(args.f)
+	for i in args.f:
+		try:
+			print get_subject(i)
+		except:
+			pass
 
 if __name__ == "__main__":
     main()
