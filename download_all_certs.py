@@ -22,9 +22,9 @@ def dump_to_files(json_data, prefix, counter):
                 # Base64 decode data, result will be ASN1 DER
                 der = base64.b64decode(k['extra_data'])
                 # Read the length of the certificate
-                l = read_int24(der, 0)
+                l = read_int24(der, 3)
                 # Extract the certificate and write it to the file
-                cert = der[3:l+3]
+                cert = der[6:l+6]
                 o.write(cert)
                 o.close()
                 # The remaining contents of der are skipped, they contain
