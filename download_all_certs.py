@@ -13,24 +13,31 @@ def read_int24(d, idx):
         """
         return unpack(">I", '\x00' + d[idx:idx+3])[0]
 
+def read_int16(d, idx):
+	""" Read a 2 byte integer
+	"""
+	return unpack(">H", d[idx:idx+2])[0]
+
 def dump_to_files(json_data, prefix, counter):
         """ Dump json CT encoded certificates (extra_data) into seperate files
         """
         for k in json_data['entries']:
-                # Open the output file
-                o = open(filename(prefix, counter), 'w')
-                # Base64 decode data, result will be ASN1 DER
-                der = base64.b64decode(k['extra_data'])
-                # Read the length of the certificate
-                l = read_int24(der, 0)
-                # Extract the certificate and write it to the file
-                cert = der[3:l+3]
-                o.write(cert)
-                o.close()
-                # The remaining contents of der are skipped, they contain
-                # the chain for verification.
-                counter = counter + 1
-        return len(json_data['entries'])
+		leaf_input = base64.b64decode(k['leaf_input'])
+		logEntryType = read_int16(leaf_input, 10)
+		print "Type of " + str(counter) + " is " + str(logEntryType)
+		# only look for x509 certificates, no precertificates.
+		if (logEntryType == 0):
+			
+	                # Open the output file
+	                o = open(filename(prefix, counter), 'w')
+			l = read_int24(leaf_input, 12)
+	                # Extract the certificate and write it to the file
+			cert = leaf_input[15:l+15]
+	                o.write(cert)
+	                o.close()
+			# The remaining contents of leaf_input are skipped,
+			# they contain the chain for verification.
+		counter = counter + 1 return len(json_data['entries'])
 
 def get_tree_size(url):
 	""" Get the current tree size of a CT server
@@ -50,6 +57,12 @@ def next_missing_index(prefix, i):
 		i = i+1
 	return i
 
+def first_missing(prefix, max):
+	for j in xrange(max, 0, -1):
+		if (isfile(filename(prefix, j))):
+			return j+1
+	return 0
+
 def check_missing(prefix, i, limit):
 	""" Determine how many files we need to download
 	"""
@@ -67,12 +80,11 @@ def download_all_certs(url, prefix):
 	"""
 	size = get_tree_size(url)
 	print "size is", size
-	i = next_missing_index(prefix, 0)
+	i = first_missing(prefix, size)
 	while(i < size):
-		r =  check_missing(prefix, i, min(size, i+63))
+		r = i+63
 		print "downloading", i, r
 		i = i + dump_to_files(download_json_certs(url, i, r), prefix, i)
-		i = next_missing_index(prefix, i)
 
 
 def main():
