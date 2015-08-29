@@ -37,7 +37,8 @@ def dump_to_files(json_data, prefix, counter):
 	                o.close()
 			# The remaining contents of leaf_input are skipped,
 			# they contain the chain for verification.
-		counter = counter + 1 return len(json_data['entries'])
+		counter = counter + 1 
+	return len(json_data['entries'])
 
 def get_tree_size(url):
 	""" Get the current tree size of a CT server
