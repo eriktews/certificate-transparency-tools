@@ -29,7 +29,7 @@ def dump_to_files(json_data, prefix, counter):
 		if (logEntryType == 0):
 			
 	                # Open the output file
-	                o = open(filename(prefix, counter), 'w')
+	                o = open(filename(prefix, 0, counter), 'w')
 			l = read_int24(leaf_input, 12)
 	                # Extract the certificate and write it to the file
 			cert = leaf_input[15:l+15]
@@ -37,6 +37,13 @@ def dump_to_files(json_data, prefix, counter):
 	                o.close()
 			# The remaining contents of leaf_input are skipped,
 			# they contain the chain for verification.
+		if (logEntryType == 1):
+			o = open(filename(prefix, 1, counter), 'w')
+			l = read_int24(leaf_input, 12+32)
+			preCert = leaf_input[15+32:l+15+32]
+			o.write(preCert)
+			o.close()
+
 		counter = counter + 1 
 	return len(json_data['entries'])
 
@@ -46,28 +53,35 @@ def get_tree_size(url):
         j = json.loads(urllib2.urlopen(url + "/ct/v1/get-sth").read())
         return j['tree_size']
 
-def filename(prefix, i):
+def index_exists(prefix, i):
+	return isfile(filename(prefix, 0, i)) or isfile(filename(prefix, 1, i))
+
+def filename(prefix, t, i):
 	""" Filename of a file with prefix and counter
 	"""
-	return prefix + str(i) + ".der"
+	if (t == 0):
+		a = "-x509"
+	else:
+		a = "-precert"
+	return prefix + str(i) + a + ".der"
 
 def next_missing_index(prefix, i):
 	""" Determine netxt index that has not yet been downloaded
 	"""
-	while(isfile(filename(prefix, i))):
+	while(index_exists(prefix, i)):
 		i = i+1
 	return i
 
 def first_missing(prefix, max):
 	for j in xrange(max, 0, -1):
-		if (isfile(filename(prefix, j))):
+		if (index_exists(prefix, j)):
 			return j+1
 	return 0
 
 def check_missing(prefix, i, limit):
 	""" Determine how many files we need to download
 	"""
-	while((not isfile(filename(prefix, i))) and (i < limit)):
+	while((not index_exists(prefix, i)) and (i < limit)):
 		i = i+1
 	return i
 
